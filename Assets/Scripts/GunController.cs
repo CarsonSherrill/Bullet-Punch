@@ -6,9 +6,9 @@ using UnityEngine.InputSystem;
 
 public class GunController : MonoBehaviour
 {
-    public float damage = 10f;
-
-    public Camera playerCamera;
+    public Transform bulletSpawnPoint;
+    public GameObject bulletPrefab;
+    public float bulletSpeed = 10f;
 
     private PlayerControls playerControls;
 
@@ -19,7 +19,7 @@ public class GunController : MonoBehaviour
 
     void Update()
     {
-        if (playerControls.Player.Shoot.IsPressed())
+        if (playerControls.Player.Shoot.triggered)
         {
             Shoot();
         }
@@ -37,10 +37,23 @@ public class GunController : MonoBehaviour
 
     private void Shoot()
     {
-            RaycastHit hit;
-            if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit))
-            {
-                Debug.Log(hit.transform.name);
-            }
+        Camera cam = Camera.main;
+        Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        RaycastHit hit;
+        Vector3 targetPoint;
+
+        if (Physics.Raycast(ray, out hit))
+        {
+            targetPoint = hit.point;
+        }
+        else
+        {
+            targetPoint = ray.GetPoint(100f);
+        }
+
+        Vector3 direction = (targetPoint - bulletSpawnPoint.position).normalized;
+        
+        var bullet = Instantiate(bulletPrefab, bulletSpawnPoint.position, Quaternion.LookRotation(direction) * Quaternion.Euler(90, 0, 0));
+        bullet.GetComponent<Rigidbody>().velocity = direction * bulletSpeed;
     }
 }
